@@ -1,21 +1,46 @@
-binh@n07f0uNd:~$ awk '{print $1}' access.log | sort | uniq -c | sort -nr | head -20
-    517 172.16.0.10
-    515 172.16.0.1
-    511 203.0.113.20
-    508 10.0.0.20
-    499 10.0.0.5
-    496 192.168.1.10
-    493 192.168.1.30
-    486 10.0.0.1
-    482 198.51.100.1
-    477 10.0.0.15
-    475 192.168.1.40
-    474 203.0.113.10
-    470 192.0.2.1
-    467 127.0.0.1
-    461 203.0.113.1
-    460 192.0.2.10
-    459 192.168.1.20
-    456 172.16.0.15
-    437 10.0.0.10
-    436 172.16.0.5
+// Top endpoint (path)
+binh@n07f0uNd:~$ awk -F\" '{print $2}' access.log | awk '{print $2}' | sort | uniq -c | sort -nr | head -30
+    160 /products.php
+    149 /payment.php
+    149 /api/data
+    144 /css/style.css
+    141 /robots.txt
+    139 /js/main.js
+    138 /images/logo.png
+    137 /news.php
+    134 /sitemap.xml
+    132 /favicon.ico
+    131 /services.php
+    131 /blog.php
+    131 /admin/login.php
+    128 /checkout.php
+    128 /admin/dashboard.php
+    124 /user/settings.php
+    124 /home.php
+    122 /contact.php
+    121 /cart.php
+    121 /api/search
+    120 /index.php
+    120 /api/users
+    119 /user/profile.php
+    118 /admin/users.php
+    113 /search.php
+    102 /about.php
+     26 /search.php?q=admin'
+      5 /contact.php?lookup=article
+      5 /checkout.php?query=query
+      5 /api/search?query=post
+
+tìm endpoint /search.php?q=admin' ta thấy:
+10.0.0.20 - - [25/Jan/2024:20:40:09 +0000] "GET /search.php?q=admin' UNION SELECT CHAR(X'42')-- HTTP/1.1" 200 1506 "-" "Googlebot/2.1"
+
+tiếp theo ta lấy tất cả hex trong CHAR(X'..') rồi giải mã:
+binh@n07f0uNd:~$ grep -oE "CHAR\(X'[0-9A-Fa-f]+'\)" access.log \
+| sed -E "s/.*X'([0-9A-Fa-f]+)'.*/\1/" \
+| tr -d '\n' \
+| xxd -r -p; echo
+TB{SQL_Injection_Detected}
+
+
+
+
