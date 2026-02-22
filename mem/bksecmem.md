@@ -60,6 +60,6 @@ The suspicious process is making outbound connection to the Internet. Quick, fin
 ---
 Final challenge: Find the hidden flag (there are 2 parts, it's in 2 seperate 'file' - they are really easy to be found, don't worry.)
 
-BKSEC{l00k_ljk3_w3_h4v3_a_n3w_m4st3r_c0mjn9_in2_t0wn}
+BKSEC{l00k_ljk3_w3_h4v3_a_n3w_vol4tilitY_m4st3r_c0mjn9_in2_t0wn}
 
 
