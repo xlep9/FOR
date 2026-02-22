@@ -16,6 +16,9 @@
 	PID=8144
 	grep -En "(^|,)$PID(,|$)" triage/*.csv
 
+	# lọc “tên lạ”
+	grep -Fvxf triage/windows_core_allowlist.txt triage/all_names.txt
+
 
 --- 
 What is the Windows version of the system being dump? (format: number)
