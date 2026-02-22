@@ -22,6 +22,10 @@
 	# lọc các tiến trình có “tên lạ”
 	grep -Fvxf triage/windows_core_allowlist.txt triage/all_names.txt
 
+	# quét tất cả file thấy trong RAM và lưu ra triage/filescan.txt
+	vol -q -f memdump.mem windows.filescan > triage/filescan.txt
+	# lọc ra những file có tên/đuôi/từ khóa đáng nghi (.vbs, .ps1, flag, ...)
+	grep -Ei 'loader\.vbs|call-remote-server\.ps1|flag2\.exe|\.vbs|\.ps1|flag' triage/filescan.txt
 
 --- 
 What is the Windows version of the system being dump? (format: number)
