@@ -1,3 +1,4 @@
+	# export ra các file 
 	vol -q -f memdump.mem -r csv windows.pslist > triage/pslist.csv
 	vol -q -f memdump.mem -r csv windows.pstree > triage/pstree.csv
 	vol -q -f memdump.mem -r csv windows.psscan > triage/psscan.csv
@@ -6,13 +7,15 @@
 	vol -q -f memdump.mem -r csv windows.netscan > triage/netscan.csv
 	vol -q -f memdump.mem -r csv windows.malware.malfind > triage/malfind.csv
 
+	# xem các cột của file
 	head -n 2 triage/pslist.csv
 	head -n 2 triage/pstree.csv
 	head -n 2 triage/psxview.csv
 	head -n 2 triage/cmdline.csv
 	head -n 2 triage/netscan.csv
 	head -n 2 triage/malfind.csv
-	
+
+	# tìm tất cả thông tin của một PID cụ thể  
 	PID=8144
 	grep -En "(^|,)$PID(,|$)" triage/*.csv
 
