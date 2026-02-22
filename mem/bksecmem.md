@@ -27,6 +27,9 @@
 	# lọc ra những file có tên/đuôi/từ khóa đáng nghi (.vbs, .ps1, flag, ...)
 	grep -Ei 'loader\.vbs|call-remote-server\.ps1|flag2\.exe|\.vbs|\.ps1|flag' triage/filescan.txt
 
+	# tìm mảnh cuối 
+	strings -a -n 12 proc_flag2_mem/pid.5228.dmp | grep -E '^.{12,80}$' | less
+	
 --- 
 What is the Windows version of the system being dump? (format: number)
 
@@ -59,6 +62,28 @@ The suspicious process is making outbound connection to the Internet. Quick, fin
 
 ---
 Final challenge: Find the hidden flag (there are 2 parts, it's in 2 seperate 'file' - they are really easy to be found, don't worry.)
+
+vol -q -f memdump.mem windows.filescan > triage/filescan.txt
+grep -Ei 'loader\.vbs|call-remote-server\.ps1|flag2\.exe|\.vbs|\.ps1|flag' triage/filescan.txt
+
+0xd20dfd1244c0  \Users\PC\Downloads\flag1.txt
+0xd20dfd97a640  \Users\PC\Documents\flag2.exe
+0xd20dfdc24e00  \Users\PC\Documents\flag2.exe
+0xd20dfdc462d0  \Windows\Temp\call-remote-server.ps1
+
+mkdir -p dumped_files
+vol -q -f memdump.mem -o dumped_files windows.dumpfiles --virtaddr 0xd20dfd97a640
+vol -q -f memdump.mem -o dumped_files windows.dumpfiles --virtaddr 0xd20dfdc24e00
+
+grep -Ei 'flag2\.exe' triage/pslist.csv triage/pstree.csv triage/cmdline.csv
+mkdir -p proc_flag2_mem
+vol -q -f memdump.mem -o proc_flag2_mem windows.memmap --pid 5228 --dump
+
+# BKSEC{l00k_ljk3_w3_h4v3_a_n3w_
+strings -a -td -n 4 proc_flag2_mem/pid.5228.dmp | grep -Ei 'BKSEC|flag1'
+
+# vol4tilitY_m4st3r_c0mjn9_in2_t0wn}
+strings -a -n 12 proc_flag2_mem/pid.5228.dmp | grep -E '^.{12,80}$' | less
 
 BKSEC{l00k_ljk3_w3_h4v3_a_n3w_vol4tilitY_m4st3r_c0mjn9_in2_t0wn}
 
