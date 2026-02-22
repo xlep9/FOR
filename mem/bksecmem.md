@@ -19,7 +19,7 @@
 	PID=8144
 	grep -En "(^|,)$PID(,|$)" triage/*.csv
 
-	# lọc “tên lạ”
+	# lọc các tiến trình có “tên lạ”
 	grep -Fvxf triage/windows_core_allowlist.txt triage/all_names.txt
 
 
