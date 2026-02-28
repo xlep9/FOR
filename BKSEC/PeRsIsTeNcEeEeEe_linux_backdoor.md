@@ -71,8 +71,6 @@ root@8a6e82de61ee:~# cat /usr/local/sbin/cat
 3. Script backdoor chạy, mở reverse shell kết nối ra ngoài
 4. Sau đó chuyển tiếp tham số cho lệnh `cat` thật để user không thấy gì bất thường
 
-Tuyệt! Mình sẽ hướng dẫn bạn **cách tìm**, **giải thích**, và **cách xóa** cho từng backdoor một cách dễ hiểu, có thể áp dụng cho các backdoor tiếp theo.
-
 ---
 
 ## **2. Systemd Service Backdoor (Issue 5 - đã xóa)**
