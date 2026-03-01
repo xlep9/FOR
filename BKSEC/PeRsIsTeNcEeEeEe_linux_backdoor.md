@@ -73,11 +73,10 @@ root@8a6e82de61ee:~# cat /usr/local/sbin/cat
 
 ### 🗑️ Cách xóa:
 - xóa rm /usr/local/sbin/cat
-- Xóa dòng trong /root/.bashrc
-sed -i '/export PATH="\/usr\/local\/sbin:\$PATH"/d' /root/.bashrc
-
-- Xóa dòng trong /home/bksec/.bashrc
-sed -i '/export PATH="\/usr\/local\/sbin:\$PATH"/d' /home/bksec/.bashrc
+- Xóa dòng trong /root/.bashrc: 
+sed -i '\|export PATH="/usr/local/sbin:$PATH"|d' /root/.bashrc
+- Xóa dòng trong /home/bksec/.bashrc:
+sed -i '\|export PATH="/usr/local/sbin:$PATH"|d' /home/bksec/.bashrc
 
 - Kiểm tra lại để chắc chắn đã xóa
 grep "export PATH" /root/.bashrc /home/bksec/.bashrc
