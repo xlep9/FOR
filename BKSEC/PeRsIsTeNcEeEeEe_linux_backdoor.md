@@ -103,7 +103,7 @@ rm /etc/systemd/system/system-healthcheck.service
 
 ---
 
-## **3. SSH Authorized Keys Backdoor (Issue 3 - đã xóa)**
+## **3. SSH Authorized Keys Backdoor (ở đây có 2 Issue)**
 
 ### 🔍 Cách tìm:
 - Kiểm tra crontab và các thư mục cron:
@@ -152,6 +152,9 @@ rm /etc/systemd/system/system-healthcheck.service
 ```bash
 # Xóa cron job
 rm /etc/cron.daily/pyshell
+
+# xóa authorized_keys
+rm /root/.ssh/authorized_keys (là một Issue)
 
 # Xóa script Python backdoor
 rm /lib/python3/dist-packages/initiate-pyshell
