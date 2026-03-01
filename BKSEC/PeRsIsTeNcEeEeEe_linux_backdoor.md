@@ -99,11 +99,6 @@ root@8a6e82de61ee:~# cat /usr/local/sbin/cat
 # Xóa file service
 rm /etc/systemd/system/system-healthcheck.service
 
-# Xóa link trong thư mục wants
-rm /etc/systemd/system/multi-user.target.wants/system-healthcheck.service
-
-# Reload systemd (dù không chạy trong container vẫn nên làm)
-systemctl daemon-reload
 ```
 
 ---
