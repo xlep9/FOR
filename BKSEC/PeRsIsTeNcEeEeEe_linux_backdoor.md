@@ -72,8 +72,15 @@ root@8a6e82de61ee:~# cat /usr/local/sbin/cat
 4. Sau đó chuyển tiếp tham số cho lệnh `cat` thật để user không thấy gì bất thường
 
 ### 🗑️ Cách xóa:
-- xóa export PATH="/usr/local/sbin:$PATH" trong /root và trong /home (vim /root/.bashrc, dd, :wq)
-- xóa /usr/local/sbin/cat (rm)
+- xóa rm /usr/local/sbin/cat
+- Xóa dòng trong /root/.bashrc
+sed -i '/export PATH="\/usr\/local\/sbin:\$PATH"/d' /root/.bashrc
+
+- Xóa dòng trong /home/bksec/.bashrc
+sed -i '/export PATH="\/usr\/local\/sbin:\$PATH"/d' /home/bksec/.bashrc
+
+- Kiểm tra lại để chắc chắn đã xóa
+grep "export PATH" /root/.bashrc /home/bksec/.bashrc
 
 ---
 
