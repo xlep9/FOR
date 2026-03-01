@@ -540,9 +540,6 @@ OK: removed
 ```bash
 /root/solveme
 ```
-
-**Kết quả thực tế của bạn:** Issue 4 đã được tính, tổng lên **6/7**.
-
 ---
 
 ## Tóm tắt Issue 4
@@ -551,5 +548,163 @@ OK: removed
 * **Persistence:** chạy mỗi lần login/SSH thông qua MOTD script
 * **Payload:** reverse shell loop về `172.17.0.1:443`
 * **Fix chuẩn:** kill process → xóa `/etc/update-motd.d/30-connectivity-check` → xóa `/var/lib/private/connectivity-check` → chạy `/root/solveme` xác nhận.
+---
 
+Dưới đây là write-up **Issue 7 (Backdoor user `pacho` thuộc group root + cho phép login shell)** theo đúng yêu cầu: có **cách phát hiện → phân tích nguy cơ → cách xử lý**, kèm **lệnh + output tiêu biểu**, bỏ qua phần lặp/không quan trọng.
 
+---
+
+# 6.  Issue 7 — Backdoor account `pacho` (GID=0, shell `/bin/bash`)
+
+### Mô tả ngắn
+
+Hệ thống bị cài một tài khoản **`pacho`** có cấu hình bất thường: **GID = 0 (root group)** và **shell đăng nhập `/bin/bash`**, tạo điều kiện cho attacker đăng nhập và có quyền mạnh bất thường.
+
+---
+
+## 1) Cách phát hiện (Detection)
+
+### 1.1. Dò các dấu hiệu trong checker (tùy môi trường)
+
+Khi trích strings từ `/root/solveme` thấy có các chuỗi liên quan:
+
+* `pacho`
+* `nologin`
+
+=> gợi ý checker đang kiểm tra một **user backdoor**.
+
+### 1.2. Tìm user `pacho` trong `/etc/passwd`
+
+Chạy:
+
+```bash
+grep -nE '(^pacho:|nologin)' /etc/passwd
+getent passwd pacho || echo "OK: no user pacho"
+```
+
+**Output (quan trọng):**
+
+```text
+26:pacho:x:1001:0::/home/pacho:/bin/bash
+pacho:x:1001:0::/home/pacho:/bin/bash
+```
+
+Giải thích format `/etc/passwd`:
+`user:pass_placeholder:UID:GID:GECOS:HOME:SHELL`
+
+Ở đây:
+
+* UID = `1001` (user thường)
+* **GID = `0`**  ✅ (thuộc **root group**)
+* SHELL = `/bin/bash` ✅ (login được tương tác)
+
+=> đây là dấu hiệu backdoor rất rõ.
+
+---
+
+## 2) Phân tích nguy hiểm / Nguy cơ (Impact & Risk)
+
+### 2.1. Vì sao GID=0 nguy hiểm?
+
+GID=0 nghĩa là user thuộc **nhóm `root`**. Nhiều file/thư mục có quyền kiểu:
+
+* `root:root` và quyền nhóm cho phép đọc/ghi/thực thi (ví dụ `rwxr-x---`, `rw-r-----`, …)
+
+Khi attacker login bằng `pacho`, họ có thể:
+
+* đọc/ghi file nhạy cảm có quyền nhóm root,
+* chỉnh sửa cấu hình, cài persistence khác,
+* kết hợp với các misconfig khác để leo thang lên root nhanh hơn.
+
+### 2.2. Shell `/bin/bash` làm tăng rủi ro
+
+`/bin/bash` cho phép login tương tác bình thường (SSH/TTY), dễ dùng để:
+
+* chạy command trực tiếp,
+* cài backdoor mới,
+* lấy flag/đánh cắp dữ liệu.
+
+---
+
+## 3) Cách giải quyết (Remediation) — chi tiết, dễ hiểu
+
+Mục tiêu:
+
+1. **loại quyền “root group”** khỏi `pacho`
+2. **không cho tài khoản login được** (đổi shell sang `nologin`)
+3. **khóa mật khẩu** (đề phòng login bằng password)
+
+### 3.1. Xác nhận trạng thái ban đầu
+
+```bash
+getent passwd pacho
+```
+
+**Output:**
+
+```text
+pacho:x:1001:0::/home/pacho:/bin/bash
+```
+
+### 3.2. Chuyển `pacho` sang group riêng (không còn GID=0)
+
+```bash
+getent group pacho >/dev/null || groupadd pacho
+usermod -g pacho pacho
+```
+
+* `groupadd pacho`: tạo group riêng nếu chưa có
+* `usermod -g pacho pacho`: đặt **primary group** của user `pacho` về group `pacho` (GID ≠ 0)
+
+### 3.3. Chặn đăng nhập: đổi shell sang `nologin` + khóa mật khẩu
+
+```bash
+usermod -s /usr/sbin/nologin pacho
+passwd -l pacho
+```
+
+* `usermod -s /usr/sbin/nologin`: user không thể login vào shell
+* `passwd -l`: khóa password (disable password login)
+
+### 3.4. Verify sau khi sửa
+
+```bash
+getent passwd pacho
+id pacho
+```
+
+**Output:**
+
+```text
+pacho:x:1001:1001::/home/pacho:/usr/sbin/nologin
+uid=1001(pacho) gid=1001(pacho) groups=1001(pacho)
+```
+
+✅ Đã đạt:
+
+* GID không còn 0
+* shell đã là nologin
+* account bị khóa password
+
+---
+
+## 4) Xác nhận với checker
+
+```bash
+/root/solveme
+```
+
+**Output (đoạn liên quan):**
+
+```text
+Issue 7 is fully remediated
+Keep looking! 1/7 issues fixed.
+```
+
+---
+
+## Tóm tắt Issue 7
+
+* **Backdoor:** user `pacho` có **GID=0** và **shell `/bin/bash`**
+* **Tác hại:** cho phép attacker login với quyền nhóm root, dễ truy cập/ghi file nhạy cảm và leo thang đặc quyền
+* **Fix chuẩn:** đổi group khỏi root + đổi shell `nologin` + khóa mật khẩu + verify + chạy checker
