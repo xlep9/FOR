@@ -376,7 +376,7 @@ Keep looking! 5/7 issues fixed.
 ```
 
 ---
-#5. Issue 4 (MOTD persistence + reverse shell 172.17.0.1:443) 
+# 5. Issue 4 (MOTD persistence + reverse shell 172.17.0.1:443) 
 
 ## Issue 4 — Persistence qua MOTD (`/etc/update-motd.d/`) + reverse shell 443
 
@@ -385,8 +385,7 @@ Keep looking! 5/7 issues fixed.
 Backdoor được cài theo cơ chế **MOTD** (Message Of The Day). Trên Ubuntu/Debian, khi SSH/login, hệ thống sẽ chạy các script trong `/etc/update-motd.d/` để in banner/motd. Attacker lợi dụng chỗ này để chạy payload **mỗi lần có người đăng nhập** (persistence cực “ẩn”).
 
 ---
-
-# 1) Cách phát hiện (Detection)
+## 1) Cách phát hiện (Detection)
 
 ## 1.1. Dò “checker” để tìm dấu vết file liên quan
 
@@ -461,7 +460,7 @@ done
 
 ---
 
-# 2) Phân tích vì sao nguy hiểm (Impact / Risk)
+## 2) Phân tích vì sao nguy hiểm (Impact / Risk)
 
 ## 2.1. Cơ chế nguy hiểm
 
@@ -498,7 +497,7 @@ nghĩa là:
 
 ---
 
-# 3) Cách giải quyết (Remediation) — chi tiết
+## 3) Cách giải quyết (Remediation) — chi tiết
 
 Nguyên tắc xử lý đúng:
 
@@ -546,7 +545,7 @@ OK: removed
 
 ---
 
-# Tóm tắt Issue 4
+## Tóm tắt Issue 4
 
 * **Dấu hiệu:** đường dẫn lạ trong `/etc/update-motd.d/` và payload trong `/var/lib/private/`
 * **Persistence:** chạy mỗi lần login/SSH thông qua MOTD script
