@@ -1,6 +1,6 @@
-# Phát hiện Backdoor qua .bashrc và /usr/local/sbin/
+## 1. Phát hiện Backdoor qua .bashrc và /usr/local/sbin/
 
-## 1. Kiểm tra thư mục home
+## a. Kiểm tra thư mục home
 
 ```bash
 root@13e229253997:~# ls -la /home/bksec/
@@ -21,7 +21,7 @@ drwx------ 2 bksec bksec 4096 Feb 28 07:18 .cache
 - File `.bashrc.bak` có thời gian `06:11` ngày 27/02 (cũ hơn)
 - Điều này cho thấy `.bashrc` đã bị sửa đổi, khả năng cao là do em trai thêm backdoor
 
-## 2. Kiểm tra nội dung .bashrc
+## b. Kiểm tra nội dung .bashrc
 
 ```bash
 root@8a6e82de61ee:~# cat /home/bksec/.bashrc
@@ -34,7 +34,7 @@ export PATH="/usr/local/sbin:$PATH"
 - Đây không phải là cấu hình chuẩn của `.bashrc`
 - Mục đích: thay đổi thứ tự tìm kiếm trong PATH, ưu tiên tìm lệnh cần thiết trong `/usr/local/sbin` trước
 
-## 4. Kiểm tra thư mục /usr/local/sbin
+## c. Kiểm tra thư mục /usr/local/sbin
 
 ```bash
 root@8a6e82de61ee:~# ls -la /usr/local/sbin/
@@ -49,7 +49,7 @@ drwxr-xr-x 1 root root 4096 Feb 10 14:05 ..
 - File `cat` trong `/usr/local/sbin` có kích thước 177 bytes (rất nhỏ so với lệnh `cat` thật)
 - Thời gian tạo `Feb 27 06:11` trùng với thời gian file `.bashrc.bak` - thời điểm em trai dùng máy
 
-## 5. Phân tích file cat giả mạo
+## d. Phân tích file cat giả mạo
 
 ```bash
 root@8a6e82de61ee:~# cat /usr/local/sbin/cat
@@ -70,6 +70,10 @@ root@8a6e82de61ee:~# cat /usr/local/sbin/cat
 2. Khi user gõ `cat`, thay vì chạy `/bin/cat`, hệ thống tìm thấy `/usr/local/sbin/cat` đầu tiên
 3. Script backdoor chạy, mở reverse shell kết nối ra ngoài
 4. Sau đó chuyển tiếp tham số cho lệnh `cat` thật để user không thấy gì bất thường
+
+### 🗑️ Cách xóa:
+- xóa export PATH="/usr/local/sbin:$PATH" trong /root và trong /home (vim /root/.bashrc, dd, :wq)
+- xóa /usr/local/sbin/cat (rm)
 
 ---
 
