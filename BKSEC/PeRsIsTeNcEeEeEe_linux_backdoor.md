@@ -159,8 +159,8 @@ rm /etc/systemd/system/system-healthcheck.service
 # Xóa cron job
 rm /etc/cron.daily/pyshell
 
-# xóa authorized_keys
-rm /root/.ssh/authorized_keys (là một Issue)
+# xóa authorized_keys (là một Issue)
+rm /root/.ssh/authorized_keys
 
 # Xóa script Python backdoor
 rm /lib/python3/dist-packages/initiate-pyshell
