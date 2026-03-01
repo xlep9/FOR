@@ -157,15 +157,3 @@ rm /etc/cron.daily/pyshell
 rm /lib/python3/dist-packages/initiate-pyshell
 ```
 
----
-
-## **Tóm tắt 3 kỹ thuật backdoor đã gặp:**
-
-| Backdoor | Vị trí | Cách hoạt động | Cách tìm | Cách xóa |
-|----------|--------|----------------|----------|----------|
-| **PATH** | `.bashrc` + `/usr/local/sbin/` | Thay đổi PATH, chạy file giả thay lệnh thật | `cat ~/.bashrc` + `ls /usr/local/sbin/` | Xóa file giả, sửa `.bashrc` |
-| **Systemd** | `/etc/systemd/system/` | Service chạy ngầm, mở port 8080 | `ls /etc/systemd/system/multi-user.target.wants/` | Xóa file service |
-| **SSH key** | Cron job + `/root/.ssh/authorized_keys` | Tự động thêm SSH key mỗi ngày | `ls /etc/cron.daily/` + `cat /root/.ssh/authorized_keys` | Xóa cron job, xóa key |
-
----
-
