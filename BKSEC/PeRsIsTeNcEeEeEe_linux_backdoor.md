@@ -161,7 +161,7 @@ rm /lib/python3/dist-packages/initiate-pyshell
 ```
 ---
 
-## Issue 1 (Bind shell 4444 + persistence qua /root/.bashrc + dropper /usr/bin/alertd)**
+## Issue 1 (Bind shell 4444 + persistence qua /root/.bashrc + dropper /usr/bin/alertd)
 
 ### 1) Cách phát hiện (Detection)
 
