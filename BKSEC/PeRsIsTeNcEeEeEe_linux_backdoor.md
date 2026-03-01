@@ -1,4 +1,4 @@
-## 1. Phát hiện Backdoor qua .bashrc và /usr/local/sbin/
+# 1. Phát hiện Backdoor qua .bashrc và /usr/local/sbin/
 
 ## a. Kiểm tra thư mục home
 
@@ -83,7 +83,7 @@ grep "export PATH" /root/.bashrc /home/bksec/.bashrc
 
 ---
 
-## **2. Systemd Service Backdoor (Issue 5 - đã xóa)**
+# 2. Systemd Service Backdoor (Issue 5 - đã xóa)
 
 ### 🔍 Cách tìm:
 - Kiểm tra các service tự động khởi động:
@@ -109,7 +109,7 @@ rm /etc/systemd/system/system-healthcheck.service
 
 ---
 
-## **3. SSH Authorized Keys Backdoor (ở đây có 2 Issue)**
+# 3. SSH Authorized Keys Backdoor (ở đây có 2 Issue)
 
 ### 🔍 Cách tìm:
 - Kiểm tra crontab và các thư mục cron:
@@ -167,7 +167,7 @@ rm /lib/python3/dist-packages/initiate-pyshell
 ```
 ---
 
-## Issue 1 (Bind shell 4444 + persistence qua /root/.bashrc + dropper /usr/bin/alertd)
+#4. Issue 1 (Bind shell 4444 + persistence qua /root/.bashrc + dropper /usr/bin/alertd)
 
 ### 1) Cách phát hiện (Detection)
 
@@ -376,7 +376,7 @@ Keep looking! 5/7 issues fixed.
 ```
 
 ---
-# Issue 4 (MOTD persistence + reverse shell 172.17.0.1:443) 
+#5. Issue 4 (MOTD persistence + reverse shell 172.17.0.1:443) 
 
 ## Issue 4 — Persistence qua MOTD (`/etc/update-motd.d/`) + reverse shell 443
 
